@@ -1,6 +1,8 @@
 # SEED — Quick Start
 
-**SEED (Scalable Expression Edit Distance)** is a extended version of previous metric [Expression Edit Distance (EED)](https://arxiv.org/pdf/2504.16074). **SEED** can evaluate LaTeX math pairs (GT vs. prediction) with a **0–100** score and distance metrics. Supports Expression, Equation, Tuple, Interval, and Numeric (with unit conversion).
+**SEED (Scalable Expression Edit Distance)** is a extended version of previous metric [Expression Edit Distance (EED)](https://arxiv.org/pdf/2504.16074). 
+
+**SEED** can evaluate LaTeX math pairs (GT vs. prediction) with a **0–100** score and distance metrics. Supports Expression, Equation, Tuple, Interval, and Numeric (with unit conversion).
 
 > Full examples: see `SEED/test.py`.
 
