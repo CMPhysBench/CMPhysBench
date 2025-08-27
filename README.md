@@ -5,7 +5,7 @@ The dataset is available at [https://huggingface.co/datasets/weidawang/CMPhysBen
 ## Acknowledgement
 **CMPhysBench** was inspired by previous dataset works including **[PHYBench](https://www.phybench.cn/)**, **[PhysBench](https://physbench.github.io/)**, **[GPQA](https://github.com/idavidrein/gpqa)** and  **[SuperGPQA](https://supergpqa.github.io)**.
 
-**Scalable Expression Edit Distance (SEED)** is inspired by `Expression Edit Distance (EED)` metric from **[PHYBench](https://www.phybench.cn/)**, which introduced Edit Distance to evaluating symbolic reasoning in physics. We extend and modify this idea by proposing the , supporting more diverse answer types and providing finer-grained evaluation dedicated for the fields of Condensed Matter Physics.
+**Scalable Expression Edit Distance (SEED)** is inspired by `Expression Edit Distance (EED)` metric from **[PHYBench](https://www.phybench.cn/)**, which introduced Edit Distance to evaluating symbolic reasoning in physics. We extend and modify this idea by proposing the SEED score, supporting more diverse answer types and providing finer-grained evaluation dedicated for the fields of Condensed Matter Physics.
 
 We sincerely thank the PHYBench team for their open-source contribution. Their code is released under the [MIT license](https://github.com/phybench-official/phybench?tab=MIT-1-ov-file#readme) and is available at [https://github.com/phybench-official/phybench](https://github.com/phybench-official/phybench).
 
