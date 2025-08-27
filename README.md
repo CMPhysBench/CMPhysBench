@@ -1,6 +1,6 @@
 # CMPhysBench: A Benchmark for Evaluating Large Language Models in Condensed Matter Physics
 
-[![Paper](https://img.shields.io/badge/Paper-B31B1B?logo=arxiv)](https://arxiv.org/abs/2508.18124)&nbsp;&nbsp;&nbsp;[![Code](https://img.shields.io/badge/Code-8A2BE2?logo=github)](https://github.com/CMPhysBench/CMPhysBench)&nbsp;&nbsp;&nbsp;[![Data](https://img.shields.io/badge/Data-FFD700?logo=huggingface)](https://huggingface.co/datasets/weidawang/CMPhysBench)&nbsp;&nbsp;&nbsp;[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://github.com/CMPhysBench/CMPhysBench/blob/main/LICENSE)
+[![Paper](https://img.shields.io/badge/Paper-B31B1B?logo=arxiv)](https://arxiv.org/abs/2508.18124)&nbsp;&nbsp;&nbsp;[![Code](https://img.shields.io/badge/Code-8A2BE2?logo=github)](https://github.com/CMPhysBench/CMPhysBench)&nbsp;&nbsp;&nbsp;[![Data](https://img.shields.io/badge/Data-00D70F?logo=huggingface)](https://huggingface.co/datasets/weidawang/CMPhysBench)&nbsp;&nbsp;&nbsp;[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://github.com/CMPhysBench/CMPhysBench/blob/main/LICENSE)
 
 
 > The dataset is available at [https://huggingface.co/datasets/weidawang/CMPhysBench](https://huggingface.co/datasets/weidawang/CMPhysBench).
