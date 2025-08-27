@@ -1,6 +1,6 @@
 # SEED — Quick Start
 
-**SEED (Scalable Expression Edit Distance)** scores LaTeX math pairs (GT vs. prediction) with a **0–100** score and distance metrics. Supports Expression, Equation, Tuple, Interval, and Numeric (with unit conversion).
+**SEED (Scalable Expression Edit Distance)** is a extended version of previous metric [Expression Edit Distance (EED)](https://arxiv.org/pdf/2504.16074). **SEED** can evaluate LaTeX math pairs (GT vs. prediction) with a **0–100** score and distance metrics. Supports Expression, Equation, Tuple, Interval, and Numeric (with unit conversion).
 
 > Full examples: see `SEED/test.py`.
 
@@ -43,4 +43,6 @@ python -m SEED.test
 
 ## Acknowledgments
 
-SEED builds on the original **EED** idea. Thanks to the [EED/PhyBench](https://github.com/phybench-official/phybench) authors.
+**Scalable Expression Edit Distance (SEED)** is inspired by `Expression Edit Distance (EED)` metric from **[PHYBench](https://www.phybench.cn/)**, which introduced Edit Distance to evaluating symbolic reasoning in physics. We extend and modify this idea by proposing the , supporting more diverse answer types and providing finer-grained evaluation dedicated for the fields of Condensed Matter Physics.
+
+We sincerely thank the PHYBench team for their open-source contribution. Their code is released under the [MIT license](https://github.com/phybench-official/phybench?tab=MIT-1-ov-file#readme) and is available at [https://github.com/phybench-official/phybench](https://github.com/phybench-official/phybench).
