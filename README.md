@@ -21,14 +21,11 @@ We sincerely thank the PHYBench team for their open-source contribution. Their c
 ## Citations
 
 ```bibtex
-@misc{wang2025cmphysbench,
-  title={CMPhysBench: A Benchmark for Evaluating Large Language Models in Condensed Matter Physics}, 
-  author={Weida Wang and Dongchen Huang and Jiatong Li and Tengchao Yang and Ziyang Zheng and Di Zhang and Dong Han and Benteng Chen and Binzhao Luo and Zhiyu Liu and Kunling Liu and Zhiyuan Gao and Shiqi Geng and Wei Ma and Jiaming Su and Xin Li and Shuchen Pu and Yuhan Shui and Qianjia Cheng and Zhihao Dou and Dongfei Cui and Changyong He and Jin Zeng and Zeke Xie and Mao Su and Dongzhan Zhou and Yuqiang Li and Wanli Ouyang and Yunqi Cai and Xi Dai and Shufei Zhang and Lei Bai and Jinguang Cheng and Zhong Fang and Hongming Weng},
-  year={2025},
-  eprint={2508.18124},
-  archivePrefix={arXiv},
-  primaryClass={cs.LG},
-  url={https://arxiv.org/abs/2508.18124}, 
+@article{wang2025cmphysbench,
+  title={CMPhysBench: A Benchmark for Evaluating Large Language Models in Condensed Matter Physics},
+  author={Wang, Weida and Huang, Dongchen and Li, Jiatong and Yang, Tengchao and Zheng, Ziyang and Zhang, Di and Han, Dong and Chen, Benteng and Luo, Binzhao and Liu, Zhiyu and others},
+  journal={arXiv preprint arXiv:2508.18124},
+  year={2025}
 }
 
 @inproceedings{rein2024gpqa,
