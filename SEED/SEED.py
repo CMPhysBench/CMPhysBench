@@ -115,13 +115,13 @@ def numeric_score_calc(student_answer_exp, ground_truth_exp):
     #  Parameter Setting Section (Adjust scoring strictness)
 
     # 100-point standard (strictest)
-    RelTol_100_strict = 0.005  # 0.5%
+    RelTol_100_strict = 0.01  # 1%
     
     # 90-point standard (moderately strict)
-    RelTol_90 = 0.01   # 1%
+    RelTol_90 = 0.02   # 2%
     
     # 80-point standard (more lenient)
-    RelTol_80 = 0.02   # 2%
+    RelTol_80 = 0.04   # 4%
     
     try:
         # If ground_truth_exp is an equation, extract the right-hand side value
@@ -326,8 +326,8 @@ def judge_interval(latex):
         # Judge whether it's open/closed interval
         is_left_closed = left_bracket == "["
         is_right_closed = right_bracket == "]"
-        left_type = "2*" if is_left_closed else "1*"
-        right_type = "*4" if is_right_closed else "*3"
+        left_type = "l_c" if is_left_closed else "l_o"
+        right_type = "r_c" if is_right_closed else "r_o"
         return True, left_type + lower_bound + "+" + upper_bound + right_type
     else:
         return False, latex
@@ -384,16 +384,43 @@ def extract_numeric_part(latex_str: str) -> str:
     """                 
     If there's an equation or approximately equal sign, take only the right side
     Use non-greedy matching .*? to ensure it doesn't accidentally match too much
-    Support various forms like a = b, a \approx b, etc.
+    Support various forms like a = b, a \\approx b, etc.
     """
-    equal_sign_pattern = r'.*?(?:=|\\approx|\\sim|\\simeq|\\propto)\s*(.*)'
+    equal_sign_pattern = r'.*(?:=|\\approx|\\sim|\\simeq|\\propto)\s*(.*)'
     match = re.search(equal_sign_pattern, s)
     if match:
         s = match.group(1).strip()
+
+    # Remove LaTeX whitespace commands so signs adjacent to numbers are preserved
+    try:
+        s = _remove_latex_whitespace_commands(s)
+    except Exception:
+        pass
+    # Normalize percent: turn "number\%" or "number%" into "number/100"
+    s = re.sub(r"(\d(?:[\d\.]*)?)\s*\\%", r"(\1/100)", s)
+    s = re.sub(r"(\d(?:[\d\.]*)?)\s*%", r"(\1/100)", s)
+    # Remove stray backslashes directly before a sign or digit (e.g., \, -\,2.14 -> -2.14)
+    s = re.sub(r'\\(?=[\d\+\-])', '', s)
+
     """  
     Actively match and extract scientific notation or regular numbers
-    This regex can match various forms like -1.28, 1.28e-5, -1.28 \times 10^{-5}, -1.28 \\times 10^{-5}, etc.
+    This regex can match various forms like -1.28, 1.28e-5, -1.28 \\times 10^{-5}, -1.28 \\\\times 10^{-5}, etc.
+    Also normalize common \\frac forms into a/b for rational parsing.
     """  
+    # Normalize \\frac forms to a/b to support rational parsing
+    # \\frac{a}{b}
+    s = re.sub(r"\\frac\s*\{\s*([^{}]+)\s*\}\s*\{\s*([^{}]+)\s*\}", r"(\1)/(\2)", s)
+    # \\frac a b (brace-less) for simple numeric tokens
+    s = re.sub(r"\\frac\s*([+-]?(?:\d+(?:\.\d+)?|\.\d+))\s*([+-]?(?:\d+(?:\.\d+)?|\.\d+))", r"\1/\2", s)
+    # \\frac12 (compact) -> 1/2
+    s = re.sub(r"\\frac\s*([0-9])\s*([0-9])", r"\1/\2", s)
+
+    # Prefer fraction pattern a/b first to avoid capturing only the numerator
+    frac_match = re.search(r"[-+]?\s*(?:\(?\s*(?:\d+\.?\d*|\.\d+)\s*\)?\s*/\s*\(?\s*(?:\d+\.?\d*|\.\d+)\s*\)?)", s)
+    if frac_match:
+        return frac_match.group(0).strip()
+
+    # Fall back to scientific/regular number
     numeric_pattern = re.compile(
         r"([-+]?\s*(?:\d+\.?\d*|\.\d+)\s*(?:(?:e|E)\s*[-+]?\s*\d+|\\\\?times\s*10\^\{?[-+]?\d+\}?)?)"
     )
@@ -403,11 +430,10 @@ def extract_numeric_part(latex_str: str) -> str:
     if match:
         # If successful match, directly return the core numeric string
         numeric_part = match.group(0)
-        # Clean up by replacing both \times and \\times with *
+        # Clean up by replacing both \\times and \\\\times with *
         cleaned_part = numeric_part.replace('\\\\times', '*').replace('\\times', '*')
         return cleaned_part.strip()
-    else:
-        return s
+    return s
 
 def extract_tuple(latex):
     """
@@ -458,6 +484,69 @@ def extract_tuple(latex):
 # Unit processing related functions
 ureg = pint.UnitRegistry()
 
+def _remove_latex_whitespace_commands(text: str) -> str:
+    """Remove common LaTeX whitespace commands from text (no regex side-effects)."""
+    if not text:
+        return text
+    commands = [
+        "\\,", "\\;", "\\:", "\\!", "\\quad", "\\qquad", "\\thinspace", "\\enspace", "\\ ",
+    ]
+    for cmd in commands:
+        text = text.replace(cmd, "")
+    return text
+
+def _safe_parse_numeric_string(numeric_str: str) -> float:
+    """
+    Safely parse a numeric string that may be in forms like:
+    - 1.23
+    - -0.5
+    - 1e-3 / 1E+6
+    - 1.2*10^3 / 1.2 * 10^{3}
+    Never uses eval. Returns float or raises ValueError.
+    """
+    if not isinstance(numeric_str, str):
+        raise ValueError("numeric_str must be a string")
+    s = numeric_str.strip()
+    # Normalize spacing and variants
+    s = s.replace("\\times", "*").replace("\\\\times", "*")
+    s = re.sub(r"\s+", "", s)
+    # Expand percent to division by 100 if trailing
+    s = re.sub(r"^(.*?)(\d(?:[\d\.]*)?)/?100\)?$", r"\1(\2/100)", s) if False else s
+    if s.endswith('%'):
+        s = s[:-1] + "/100"
+    if s.endswith('\\%'):
+        s = s[:-2] + "/100"
+    # Normalize *10^{n} to *10**n
+    s = re.sub(r"\*10\^\{?([+-]?\d+)\}?", r"*10**\1", s)
+    # Pattern a*10**b
+    m = re.fullmatch(r"([+-]?(?:\d+(?:\.\d+)?|\.\d+))\*10\*\*([+-]?\d+)", s)
+    if m:
+        base = float(m.group(1))
+        exp = int(m.group(2))
+        return base * (10 ** exp)
+    # Pattern scientific e/E
+    m = re.fullmatch(r"([+-]?(?:\d+(?:\.\d+)?|\.\d+))[eE]([+-]?\d+)", s)
+    if m:
+        base = float(m.group(1))
+        exp = int(m.group(2))
+        return base * (10 ** exp)
+    # Fraction a/b (allow simple parentheses around parts), only when exactly one '/'
+    if s.count('/') == 1:
+        num_str, den_str = s.split('/', 1)
+        # strip one layer of parentheses if present
+        num_str = re.sub(r"^\((.*)\)$", r"\1", num_str)
+        den_str = re.sub(r"^\((.*)\)$", r"\1", den_str)
+        num = _safe_parse_numeric_string(num_str)
+        den = _safe_parse_numeric_string(den_str)
+        if den == 0:
+            raise ValueError("Division by zero in fraction")
+        return num / den
+    # Plain number
+    m = re.fullmatch(r"[+-]?(?:\d+(?:\.\d+)?|\.\d+)", s)
+    if m:
+        return float(s)
+    raise ValueError(f"Unrecognized numeric format: {numeric_str}")
+
 def clean_latex_unit(unit_str):
     r"""
     Clean LaTeX unit string for pint parsing
@@ -472,6 +561,7 @@ def clean_latex_unit(unit_str):
     if unit_str.startswith("{") and unit_str.endswith("}"):
         unit_str = unit_str[1:-1]
     unit_str = unit_str.strip()
+    unit_str = _remove_latex_whitespace_commands(unit_str)
     return unit_str
 
 def parse_latex_quantity_general(latex_str):
@@ -484,12 +574,10 @@ def parse_latex_quantity_general(latex_str):
     Returns: (float value, unit string)
     """
     numeric_part = extract_numeric_part(latex_str)
-    
     try:
-        numeric_clean = re.sub(r'\*\s*10\^', '*10**', numeric_part)
-        number = float(eval(numeric_clean))
+        number = _safe_parse_numeric_string(numeric_part)
     except Exception as e:
-        raise ValueError(f"Failed to compute numeric value: {numeric_clean}, error: {e}")
+        raise ValueError(f"Failed to compute numeric value from: {numeric_part}, error: {e}")
 
     original_numeric = re.search(r"[-+]?\s*(?:\d+\.?\d*|\.\d+)\s*(?:(?:e|E)\s*[-+]?\s*\d+|\\\\?times\s*10\^\{?[-+]?\d+\}?)?", latex_str)
     if original_numeric:
@@ -498,9 +586,6 @@ def parse_latex_quantity_general(latex_str):
         unit_part = ""
     
     unit_part = clean_latex_unit(unit_part)
-    
-    unit_part = re.sub(r"\\[ ,!quadthinse]*", "", unit_part)
-    
     return number, unit_part
 
 def convert_and_output_general(latex_qty1, latex_qty2, target_unit=None):
@@ -624,24 +709,70 @@ def SEED(answer_latex,test_latex,type,debug_mode=False):
             is_interval, test_latex= judge_interval(test_latex)
             # if is_interval:t='Interval'
         elif type=='Numeric':
-            answer_no_latex = re.sub(r'\\[a-zA-Z]+', '', answer_latex)
-            test_no_latex = re.sub(r'\\[a-zA-Z]+', '', test_latex)
-            has_units = bool(re.search(r'[a-zA-Z]', answer_no_latex + test_no_latex))
-            
-            if has_units:
-                try:
-                    # Perform unit conversion only when a unit is present
-                    answer_latex, test_latex = convert_and_output_general(answer_latex, test_latex)
-                except Exception as e:
-                    # If unit conversion fails, skip it and process the numeric value directly
-                    print(f"Unit conversion failed: {e}, proceeding with numeric extraction only")
-            
-            # Extract the numeric part
-            answer_latex = extract_numeric_part(answer_latex)
-            test_latex = extract_numeric_part(test_latex)
+            # Numeric path: directly compute numeric values first using SymPy on RHS, then try units, then fallback
+            def _rhs_or_self(s: str) -> str:
+                ss = s.strip()
+                if ss.startswith('$') and ss.endswith('$'):
+                    ss = ss.strip('$').strip()
+                if ss.startswith('\\(') and ss.endswith('\\)'):
+                    ss = ss[2:-2].strip()
+                if ss.startswith('\\[') and ss.endswith('\\]'):
+                    ss = ss[2:-2].strip()
+                m = re.search(r'.*(?:=|\\approx|\\sim|\\simeq|\\propto)\s*(.*)', ss)
+                if m:
+                    return m.group(1).strip()
+                return ss
 
-            answer_latex = re.sub(r'\\(?![a-zA-Z])', '', answer_latex)
-            test_latex = re.sub(r'\\(?![a-zA-Z])', '', test_latex)
+            def _normalize_numeric_rhs(s: str) -> str:
+                # Replace common LaTeX multiply operators and remove whitespace commands
+                s = re.sub(r'\\+times', '*', s)
+                s = re.sub(r'\\+cdot',  '*', s)
+                s = _remove_latex_whitespace_commands(s)
+                return s
+
+            # 1) Try SymPy evaluation on RHS (handles pi and algebraic forms)
+            try:
+                ans_rhs = _normalize_numeric_rhs(_rhs_or_self(answer_latex))
+                tst_rhs = _normalize_numeric_rhs(_rhs_or_self(test_latex))
+                ans_exp_try = master_convert(ans_rhs, 'Expression')
+                test_exp_try = master_convert(tst_rhs, 'Expression')
+                if ans_exp_try is not None and test_exp_try is not None:
+                    score = numeric_score_calc(test_exp_try, ans_exp_try)
+                    return score, -1, -1, -1
+            except Exception:
+                pass
+
+            # 2) Try unit-aware comparison
+            def _try_parse_quantity(s):
+                try:
+                    return parse_latex_quantity_general(s)
+                except Exception:
+                    return None, None
+            a_val, a_unit = _try_parse_quantity(answer_latex)
+            t_val, t_unit = _try_parse_quantity(test_latex)
+
+            if a_val is not None and t_val is not None and a_unit and t_unit:
+                try:
+                    qa = a_val * ureg(a_unit)
+                    qt = t_val * ureg(t_unit)
+                    qt_conv = qt.to(qa.units)
+                    score = numeric_score_calc(Float(qt_conv.magnitude), Float(qa.magnitude))
+                    return score, -1, -1, -1
+                except Exception:
+                    pass
+
+            # 3) Fallback: strict numeric tokens
+            try:
+                if a_val is None:
+                    a_val = _safe_parse_numeric_string(extract_numeric_part(answer_latex))
+                if t_val is None:
+                    t_val = _safe_parse_numeric_string(extract_numeric_part(test_latex))
+                print(a_val)
+                print(t_val)
+                score = numeric_score_calc(Float(t_val), Float(a_val))
+                return score, -1, -1, -1
+            except Exception:
+                return 0, -1, -1, -1
 
         answer_exp = master_convert(answer_latex, type)
         test_exp = master_convert(test_latex, type)
@@ -730,16 +861,10 @@ def SEED(answer_latex,test_latex,type,debug_mode=False):
 
     rel_distance=distance/tree_size
     
-    # If it's Numeric type, use numerical comparison logic
-    if type == 'Numeric':
-        score = numeric_score_calc(test_exp, answer_exp)
-
-        return score, -1, -1, -1
-    else:
-        score = score_calc(distance_number, tree_size)
-
-        return score,rel_distance,tree_size,distance_number
-
+    # Non-numeric types use tree-based scoring
+    score = score_calc(distance_number, tree_size)
+    return score,rel_distance,tree_size,distance_number
+    
 if __name__ == "__main__":
     # Example usage of SEED scoring
     # -----------------------------------------------------------
@@ -750,9 +875,9 @@ if __name__ == "__main__":
     #          "Expression", "Equation", "Tuple", "Interval", "Numeric"
     # -----------------------------------------------------------
 
-    gt = r"[0,1]"    # Ground truth LaTeX expression
-    pred = r"\left[0, 1 \right]"  # Predicted LaTeX expression
-    type = "Interval"     # Answer type
+    gt = r"4.08 \\times 10^{-5}(\\mathrm{~cm})"    # Ground truth LaTeX expression
+    pred = r"4.08 \\times 10^{-7}(\\mathrm{~m})"  # Predicted LaTeX expression
+    type = "Numeric"     # Answer type
 
     score, rel_distance, tree_size, dist = SEED(gt, pred, type)
 

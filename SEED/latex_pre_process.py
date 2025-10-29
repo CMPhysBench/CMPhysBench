@@ -424,6 +424,11 @@ def first_pre_process(s,t,extract_box=True):
     if '\\quad' in boxed_content:
         boxed_content = boxed_content.split('\\quad')[0]
 
+    if '\\qquad' in boxed_content:
+        boxed_content = boxed_content.split('\\qquad')[0]
+
+        boxed_content = boxed_content.strip(' \\') 
+
     if t == "Equation":
         last_equal_content = boxed_content
     else:
@@ -672,6 +677,7 @@ def second_pre_process(s):
         ('\\dagger','\\bar{dagger}'),
         ('\\operatorname{dim}','\\bar{dim}'),
         ('\\overleftarrow','\\bar{overleftarrow}'),
+        ('\;',' '),
         (';','\\bar{CD}'),
         ('\\partial','\\bar{partial}'),
         ('\\perp','\\bar{perp}'),
@@ -854,6 +860,7 @@ def master_convert_with_timeout(s, t):
     preprocessed_stage1 = first_pre_process(s, t)
     preprocessed_stage2 = second_pre_process(preprocessed_stage1)
     Sym = latex2sympy(preprocessed_stage2, normalization_config=MyNormalization(), conversion_config=MyConfig())
+    # print(Sym)
     return Sym
 
 def master_convert(s,t):
