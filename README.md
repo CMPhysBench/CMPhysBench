@@ -10,6 +10,7 @@ CMPhysBench is a benchmark for evaluating large language models in condensed mat
 <div align="center">
   <img src="imgs/CMPhysBench.png" width="1000"/>
 </div>
+
 ## Run Evaluation
 
 1. **Environment**
