@@ -10,8 +10,41 @@ CMPhysBench is a benchmark for evaluating large language models in condensed mat
 <div align="center">
   <img src="imgs/CMPhysBench.png" width="1000"/>
 </div>
+## Run Evaluation
+
+1. **Environment**
+
+   ```bash
+   pip install torch datasets tqdm vllm
+   pip install sympy numpy latex2sympy2_extended timeout_decorator pint
+   ```
+
+2. **Usage**
+
+   To run the evaluation, use the following command, specifying the path to your model:
+
+   ```bash
+   python evaluation.py --model-path /path/to/your/model --k 1
+   ```
+
+3. **Output Structure**
+
+   The script creates a unique, timestamped directory for each run inside ``./output``. The dataset is automatically cached locally to a ``CMPhysBench`` directory to avoid re-downloading.
+
+   ```text
+   .
+   ├── evaluation.py
+   ├── SEED/
+   ├── CMPhysBench/              # <-- Local dataset cache
+   └── output/
+       └── <model_name>_pass@<k>_<timestamp>/  # <-- Unique directory for each run
+           ├── run.log                         # Full run log (includes final results table)
+           ├── <model_name>-pass@<k>.jsonl     # Raw model inference output
+           └── <model_name>-pass@<k>_final_results.json  # Final comprehensive results file with all info
+   ```
 
 ## Acknowledgement
+
 **CMPhysBench** was inspired by previous dataset works including [PHYBench](https://www.phybench.cn/), [PHYSICS](https://arxiv.org/pdf/2506.00022), [GPQA](https://github.com/idavidrein/gpqa) and  [OlympiadBench](https://github.com/OpenBMB/OlympiadBench).
 
 **Scalable Expression Edit Distance (SEED)** is inspired by `Expression Edit Distance (EED)` metric from [PHYBench](https://www.phybench.cn/), which introduced Edit Distance to evaluating symbolic reasoning in physics. We extend and modify this idea by proposing the SEED score, supporting more diverse answer types and providing fine-grained and more robust evaluation dedicated for the fields of Condensed Matter Physics.
@@ -25,34 +58,6 @@ We sincerely thank the PHYBench team for their open-source contribution. Their c
   title={CMPhysBench: A Benchmark for Evaluating Large Language Models in Condensed Matter Physics},
   author={Wang, Weida and Huang, Dongchen and Li, Jiatong and Yang, Tengchao and Zheng, Ziyang and Zhang, Di and Han, Dong and Chen, Benteng and Luo, Binzhao and Liu, Zhiyu and others},
   journal={arXiv preprint arXiv:2508.18124},
-  year={2025}
-}
-
-@inproceedings{rein2024gpqa,
-  title={Gpqa: A graduate-level google-proof q\&a benchmark},
-  author={Rein, David and Hou, Betty Li and Stickland, Asa Cooper and Petty, Jackson and Pang, Richard Yuanzhe and Dirani, Julien and Michael, Julian and Bowman, Samuel R},
-  booktitle={First Conference on Language Modeling},
-  year={2024}
-}
-
-@article{zheng2025scaling,
-  title={Scaling physical reasoning with the physics dataset},
-  author={Zheng, Shenghe and Cheng, Qianjia and Yao, Junchi and Wu, Mengsong and He, Haonan and Ding, Ning and Cheng, Yu and Hu, Shuyue and Bai, Lei and Zhou, Dongzhan and others},
-  journal={arXiv preprint arXiv:2506.00022},
-  year={2025}
-}
-
-@article{he2024olympiadbench,
-  title={Olympiadbench: A challenging benchmark for promoting agi with olympiad-level bilingual multimodal scientific problems},
-  author={He, Chaoqun and Luo, Renjie and Bai, Yuzhuo and Hu, Shengding and Thai, Zhen Leng and Shen, Junhao and Hu, Jinyi and Han, Xu and Huang, Yujie and Zhang, Yuxiang and others},
-  journal={arXiv preprint arXiv:2402.14008},
-  year={2024}
-}
-
-@article{qiu2025phybench,
-  title={Phybench: Holistic evaluation of physical perception and reasoning in large language models},
-  author={Qiu, Shi and Guo, Shaoyang and Song, Zhuo-Yang and Sun, Yunbo and Cai, Zeyu and Wei, Jiashen and Luo, Tianyu and Yin, Yixuan and Zhang, Haoxu and Hu, Yi and others},
-  journal={arXiv preprint arXiv:2504.16074},
   year={2025}
 }
 ```
