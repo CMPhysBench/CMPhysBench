@@ -860,7 +860,6 @@ def master_convert_with_timeout(s, t):
     preprocessed_stage1 = first_pre_process(s, t)
     preprocessed_stage2 = second_pre_process(preprocessed_stage1)
     Sym = latex2sympy(preprocessed_stage2, normalization_config=MyNormalization(), conversion_config=MyConfig())
-    print(Sym)
     return Sym
 
 def master_convert(s,t):
