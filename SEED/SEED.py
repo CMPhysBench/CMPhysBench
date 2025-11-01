@@ -610,7 +610,7 @@ def convert_and_output_general(latex_qty1, latex_qty2, target_unit=None):
 
     return out1, out2
 
-def SEED(answer_latex,test_latex,type,debug_mode=False):
+def SEED(answer_latex,test_latex,expr_type,debug_mode=False):
     """
     SEED (Scalable Expression Edit Distance) - Enhanced version of EED
     NEW FEATURES in SEED vs EED:
@@ -669,7 +669,7 @@ def SEED(answer_latex,test_latex,type,debug_mode=False):
     #     return 0,-1,-1,-1
     
     try:
-        if type == 'Tuple':
+        if expr_type == 'Tuple':
             answer_dict = extract_tuple(answer_latex)
             test_dict = extract_tuple(test_latex)
 
@@ -704,11 +704,11 @@ def SEED(answer_latex,test_latex,type,debug_mode=False):
 
             return scores / size, rel_distances / size, tree_sizes / size, distance_numbers / size
         
-        elif type=='Interval':
+        elif expr_type=='Interval':
             is_interval, answer_latex= judge_interval(answer_latex)
             is_interval, test_latex= judge_interval(test_latex)
             # if is_interval:t='Interval'
-        elif type=='Numeric':
+        elif expr_type=='Numeric':
             # Numeric path: directly compute numeric values first using SymPy on RHS, then try units, then fallback
             def _rhs_or_self(s: str) -> str:
                 ss = s.strip()
@@ -730,19 +730,23 @@ def SEED(answer_latex,test_latex,type,debug_mode=False):
                 s = _remove_latex_whitespace_commands(s)
                 return s
 
-            # 1) Try SymPy evaluation on RHS (handles pi and algebraic forms)
             try:
                 ans_rhs = _normalize_numeric_rhs(_rhs_or_self(answer_latex))
                 tst_rhs = _normalize_numeric_rhs(_rhs_or_self(test_latex))
                 ans_exp_try = master_convert(ans_rhs, 'Expression')
                 test_exp_try = master_convert(tst_rhs, 'Expression')
                 if ans_exp_try is not None and test_exp_try is not None:
-                    score = numeric_score_calc(test_exp_try, ans_exp_try)
-                    return score, -1, -1, -1
+                    try:
+                        if getattr(ans_exp_try, 'free_symbols', set()) or getattr(test_exp_try, 'free_symbols', set()):
+                            pass  # fall through to unit-aware parsing
+                        else:
+                            score = numeric_score_calc(test_exp_try, ans_exp_try)
+                            return score, -1, -1, -1
+                    except Exception:
+                        pass
             except Exception:
                 pass
 
-            # 2) Try unit-aware comparison
             def _try_parse_quantity(s):
                 try:
                     return parse_latex_quantity_general(s)
@@ -761,7 +765,6 @@ def SEED(answer_latex,test_latex,type,debug_mode=False):
                 except Exception:
                     pass
 
-            # 3) Fallback: strict numeric tokens
             try:
                 if a_val is None:
                     a_val = _safe_parse_numeric_string(extract_numeric_part(answer_latex))
@@ -774,9 +777,9 @@ def SEED(answer_latex,test_latex,type,debug_mode=False):
             except Exception:
                 return 0, -1, -1, -1
 
-        answer_exp = master_convert(answer_latex, type)
-        test_exp = master_convert(test_latex, type)
-        if type =='Equation':
+        answer_exp = master_convert(answer_latex, expr_type)
+        test_exp = master_convert(test_latex, expr_type)
+        if expr_type =='Equation':
             answer_exp = Equation_standardize(answer_exp)
             test_exp = Equation_standardize(test_exp)
 
@@ -822,7 +825,7 @@ def SEED(answer_latex,test_latex,type,debug_mode=False):
         zero_exp=safe_subtract_and_simplify(answer_exp,test_exp)
         # zero_exp=time_simplify(expand(answer_exp-test_exp))       
 
-        if type == "Equation":
+        if expr_type == "Equation":
             if answer_exp == test_exp or zero_exp == 0 or answer_exp + test_exp == 0:
                 return 100, 0., 0, 0
 
@@ -875,11 +878,11 @@ if __name__ == "__main__":
     #          "Expression", "Equation", "Tuple", "Interval", "Numeric"
     # -----------------------------------------------------------
 
-    gt = r"4.08 \\times 10^{-5}(\\mathrm{~cm})"    # Ground truth LaTeX expression
-    pred = r"4.08 \\times 10^{-7}(\\mathrm{~m})"  # Predicted LaTeX expression
-    type = "Numeric"     # Answer type
+    gt = "4.08 \\times 10^{-5}(\\mathrm{~cm})"    # Ground truth LaTeX expression
+    pred = "4.08 \\times 10^{-7}(\\mathrm{~m})"  # Predicted LaTeX expression
+    expr_type = "Numeric"     # Answer type
 
-    score, rel_distance, tree_size, dist = SEED(gt, pred, type)
+    score, rel_distance, tree_size, dist = SEED(gt, pred, expr_type)
 
     print("\n=== Test Result ===")
     print(f"GT LaTeX:      {gt}")

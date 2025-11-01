@@ -765,7 +765,7 @@ def second_pre_process(s):
     s=convert_vec_syntax(s)
     s=exp_frac(s)
     if s and s[-1] == '.':
-        return s[:-1]
+        s = s[:-1]
     s = s.replace(r'\varkappa', r'\kappa')
     # First replace derivative forms to avoid parsing errors
     s = replace_derivative_frac_preserve_frac(s)
@@ -860,7 +860,7 @@ def master_convert_with_timeout(s, t):
     preprocessed_stage1 = first_pre_process(s, t)
     preprocessed_stage2 = second_pre_process(preprocessed_stage1)
     Sym = latex2sympy(preprocessed_stage2, normalization_config=MyNormalization(), conversion_config=MyConfig())
-    # print(Sym)
+    print(Sym)
     return Sym
 
 def master_convert(s,t):
